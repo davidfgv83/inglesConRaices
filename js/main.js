@@ -6,8 +6,8 @@
 // ─── Configuración ───────────────────────────────────────────────────────────
 // Reemplaza con la URL de tu Web App de Google Apps Script.
 // Deploy → New deployment → Web app → copia la URL aquí.
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwVLbvDMTx8RlaGmb1eWHSogVJh0QVOAzea9Y0P529fXvNdREeKsH4dnhtCJKF3tj0g2w/exec';
-
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGEilMz6_wVX-ExvQ_AStW7am04pAu1HVLXJpPenVQyyI0nmhaw9PPlMGnIoyp57rElw/exec';
+                  
 // ─── Scroll reveal ───────────────────────────────────────────────────────────
 const observer = new IntersectionObserver(
   (entries) => {
