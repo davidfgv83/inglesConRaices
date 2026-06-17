@@ -4,9 +4,9 @@
    ───────────────────────────────────────────── */
 
 // ─── Configuración ───────────────────────────────────────────────────────────
-// Reemplaza con la URL de tu formulario en formspree.io
-// Ej: 'https://formspree.io/f/xyzabcde'
-const FORMSPREE_URL = 'https://formspree.io/f/REEMPLAZA_CON_TU_ID';
+// Reemplaza con la URL de tu Web App de Google Apps Script.
+// Deploy → New deployment → Web app → copia la URL aquí.
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwVLbvDMTx8RlaGmb1eWHSogVJh0QVOAzea9Y0P529fXvNdREeKsH4dnhtCJKF3tj0g2w/exec';
 
 // ─── Scroll reveal ───────────────────────────────────────────────────────────
 const observer = new IntersectionObserver(
@@ -45,20 +45,16 @@ form.addEventListener('submit', async (e) => {
   setLoading(true);
 
   try {
-    const res = await fetch(FORMSPREE_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode:   'no-cors',
+      headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
     });
 
-    if (res.ok) {
-      showStatus('success', '¡Mensaje enviado! Te contactaremos pronto.');
-      form.reset();
-    } else {
-      const data = await res.json();
-      const msg  = data?.errors?.map(err => err.message).join(', ') || 'Error al enviar.';
-      showStatus('error', msg);
-    }
+    // Con no-cors la respuesta es opaca, pero el dato llega.
+    showStatus('success', '¡Mensaje enviado! Te contactaremos pronto.');
+    form.reset();
   } catch {
     showStatus('error', 'Sin conexión. Inténtalo de nuevo.');
   } finally {
