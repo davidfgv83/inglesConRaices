@@ -1,5 +1,15 @@
 [
   {
+    "slug": "prueba-de-blog-en-publicaciones",
+    "title": "Prueba de blog en publicaciones",
+    "excerpt": "m Ipsum?\r \r *Lorem Ipsum* es simplemente el texto de relleno de las imprentas y\r archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las\r industrias desde el año...",
+    "author": "David Julián Castaño",
+    "date": "19 de junio de 2026",
+    "category": "publicaciones",
+    "categoryLabel": "Publicaciones",
+    "image": "prueba-de-blog-en-publicaciones-1.png"
+  },
+  {
     "slug": "hola-esto-es-una-prueba-de-blog",
     "title": "Hola esto es una prueba de Blog...",
     "excerpt": "Y así fue como lo logramos!!!\r \r ¿Por qué lo usamos?\r \r Es un hecho establecido hace demasiado tiempo que un lector se distraerá\r con el contenido del texto de un sitio mientras qu...",
