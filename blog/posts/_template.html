@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}} · Blog · Inglés con Raíces</title>
+  <meta name="description" content="{{EXCERPT}}">
+  <link rel="canonical" href="https://inglesconraices.com/blog/posts/{{SLUG}}.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://inglesconraices.com/blog/posts/{{SLUG}}.html">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{EXCERPT}}">
+  <meta property="og:image" content="https://inglesconraices.com/blog/images/{{IMAGE}}">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css?v=2">
+  <link rel="stylesheet" href="../../css/blog.css?v=1">
+</head>
+<body>
+
+<nav>
+  <a href="../../" class="nav-brand">
+    <div class="nav-dot"></div>
+    <span class="nav-name">inglesconraices.com</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="../../#sobre">Sobre nosotros</a></li>
+    <li><a href="../../#metodo">Metodología</a></li>
+    <li><a href="../" class="nav-link--active">Blog</a></li>
+    <li><a href="../../#contacto">Contacto</a></li>
+  </ul>
+  <a href="../../#contacto" class="nav-cta">Conectemos</a>
+</nav>
+
+<article class="post-container">
+  <a href="../" class="post-back">← Volver al blog</a>
+  <span class="post-category">{{CATEGORY_LABEL}}</span>
+  <h1 class="post-title">{{TITLE}}</h1>
+  <p class="post-meta">Por {{AUTHOR}} · {{DATE}}</p>
+  <div class="post-content">
+    {{CONTENT}}
+  </div>
+</article>
+
+<footer>
+  <span class="footer-brand">Inglés con Raíces · Genre Translanguaging</span>
+  <span>© 2026 · Bogotá, Colombia</span>
+  <a href="../../">← Inicio</a>
+</footer>
+
+</body>
+</html>
