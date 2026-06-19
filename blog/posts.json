@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "slug": "hola-esto-es-una-prueba-de-blog",
+    "title": "Hola esto es una prueba de Blog...",
+    "excerpt": "Y así fue como lo logramos!!!\r \r ¿Por qué lo usamos?\r \r Es un hecho establecido hace demasiado tiempo que un lector se distraerá\r con el contenido del texto de un sitio mientras qu...",
+    "author": "David García",
+    "date": "19 de junio de 2026",
+    "category": "experiencias",
+    "categoryLabel": "Experiencias",
+    "image": "hola-esto-es-una-prueba-de-blog-1.jpg"
+  }
+]
