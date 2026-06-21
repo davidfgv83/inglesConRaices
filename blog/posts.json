@@ -1,5 +1,15 @@
 [
   {
+    "slug": "hola-prieba",
+    "title": "hola prieba",
+    "excerpt": "Bbfvgfhjbc...",
+    "author": "David Julián Castaño",
+    "date": "20 de junio de 2026",
+    "category": "experiencias",
+    "categoryLabel": "Experiencias",
+    "image": "hola-prieba-1.jpg"
+  },
+  {
     "slug": "prueba-de-blog-en-publicaciones",
     "title": "Prueba de blog en publicaciones",
     "excerpt": "m Ipsum?\r \r *Lorem Ipsum* es simplemente el texto de relleno de las imprentas y\r archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las\r industrias desde el año...",
