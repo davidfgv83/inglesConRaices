@@ -23,58 +23,86 @@ const observer = new IntersectionObserver(
 
 document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
 
-// ─── Formulario de contacto ──────────────────────────────────────────────────
-const form      = document.getElementById('contact-form');
-const submitBtn = form.querySelector('.form-submit');
+// ─── Menú hamburguesa ────────────────────────────────────────────────────────
+const hamburger = document.getElementById('nav-hamburger');
+const navLinks  = document.getElementById('nav-links');
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+if (hamburger && navLinks) {
+  hamburger.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('is-open');
+    hamburger.classList.toggle('is-open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen);
+  });
 
-  const payload = {
-    nombre:      form.nombre.value.trim(),
-    institucion: form.institucion.value.trim(),
-    email:       form.email.value.trim(),
-    mensaje:     form.mensaje.value.trim(),
-  };
-
-  if (!payload.nombre || !payload.email || !payload.mensaje) {
-    showStatus('error', 'Por favor completa nombre, correo y mensaje.');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      mode:   'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
+  // Cerrar al hacer clic en un link
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('is-open');
+      hamburger.classList.remove('is-open');
+      hamburger.setAttribute('aria-expanded', 'false');
     });
+  });
 
-    // Con no-cors la respuesta es opaca, pero el dato llega.
-    showStatus('success', '¡Mensaje enviado! Te contactaremos pronto.');
-    form.reset();
-  } catch {
-    showStatus('error', 'Sin conexión. Inténtalo de nuevo.');
-  } finally {
-    setLoading(false);
-  }
-});
-
-function setLoading(loading) {
-  submitBtn.disabled    = loading;
-  submitBtn.textContent = loading ? 'Enviando…' : 'Enviar mensaje';
+  // Cerrar al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
+      navLinks.classList.remove('is-open');
+      hamburger.classList.remove('is-open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    }
+  });
 }
 
-function showStatus(type, message) {
-  const prev = form.querySelector('.form-status');
-  if (prev) prev.remove();
+// ─── Formulario de contacto ──────────────────────────────────────────────────
+const form      = document.getElementById('contact-form');
+const submitBtn = form ? form.querySelector('.form-submit') : null;
 
-  const el = document.createElement('p');
-  el.className  = `form-status form-status--${type}`;
-  el.textContent = message;
-  form.appendChild(el);
+if (form && submitBtn) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  if (type === 'success') setTimeout(() => el.remove(), 6000);
+    const payload = {
+      nombre:      form.nombre.value.trim(),
+      institucion: form.institucion.value.trim(),
+      email:       form.email.value.trim(),
+      mensaje:     form.mensaje.value.trim(),
+    };
+
+    if (!payload.nombre || !payload.email || !payload.mensaje) {
+      showStatus('error', 'Por favor completa nombre, correo y mensaje.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await fetch(SHEET_URL, {
+        method: 'POST',
+        mode:   'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      showStatus('success', '¡Mensaje enviado! Te contactaremos pronto.');
+      form.reset();
+    } catch {
+      showStatus('error', 'Sin conexión. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function setLoading(loading) {
+    submitBtn.disabled    = loading;
+    submitBtn.textContent = loading ? 'Enviando…' : 'Enviar mensaje';
+  }
+
+  function showStatus(type, message) {
+    const prev = form.querySelector('.form-status');
+    if (prev) prev.remove();
+    const el = document.createElement('p');
+    el.className   = `form-status form-status--${type}`;
+    el.textContent = message;
+    form.appendChild(el);
+    if (type === 'success') setTimeout(() => el.remove(), 6000);
+  }
 }

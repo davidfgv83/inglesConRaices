@@ -1,18 +1,15 @@
 // ─── Blog Publisher · Inglés con Raíces ──────────────────────────────────────
-// Este script se ejecuta con un trigger de tiempo (cada 5 min).
-// Lee correos con asunto "BLOG:" de remitentes autorizados,
-// los guarda como borradores, y envía notificación para aprobación.
+// Flujo: Email con "BLOG:" → borrador en Sheet → notificación a aprobador →
+//        aprobador responde "OK" → se publica automáticamente en GitHub.
 //
 // SETUP:
-// 1. Pega este código en un proyecto de Apps Script nuevo
-// 2. Configura las propiedades del script (Settings → Script Properties):
-//    - GITHUB_TOKEN: tu Personal Access Token con permiso "repo"
-//    - GITHUB_REPO: davidfgv83/inglesConRaices
-// 3. Crea un trigger de tiempo: Edit → Triggers → Add → checkForBlogEmails → cada 5 min
-// 4. Despliega como Web App (para la aprobación): Deploy → New deployment → Web app
+// 1. Pega este código en Apps Script vinculado al Sheet (o standalone con sheetId)
+// 2. Script Properties: GITHUB_TOKEN, SHEET_ID
+// 3. Crear DOS triggers de tiempo (cada 5 min):
+//    - checkForBlogEmails
+//    - checkForApprovals
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Configuración
 const CONFIG = {
   authorizedEmails: [
     'yagonzalezme@educacionbogota.edu.co',
@@ -21,9 +18,9 @@ const CONFIG = {
   ],
   approverEmail: 'davidfgv83@gmail.com',
   githubRepo: 'davidfgv83/inglesConRaices',
-  blogPath: 'blog/',
   sheetName: 'Blog-Borradores',
   subjectPrefix: 'BLOG:',
+  approvalSubjectPrefix: '📝 Post pendiente:',
   categories: {
     'experiencia': 'Experiencias',
     'experiencias': 'Experiencias',
@@ -37,148 +34,208 @@ const CONFIG = {
   defaultCategoryLabel: 'Experiencias'
 };
 
-/**
- * Ejecuta cada 5 min vía trigger.
- * Busca correos nuevos con asunto "BLOG:" de autores autorizados.
- */
+function getSheet() {
+  const sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  const ss = SpreadsheetApp.openById(sheetId);
+  let sheet = ss.getSheetByName(CONFIG.sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.sheetName);
+    sheet.appendRow(['ID', 'Fecha', 'Autor', 'Título', 'Slug', 'Categoría', 'CategoríaLabel', 'Contenido', 'Imágenes', 'Estado']);
+    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRIGGER 1: Buscar correos nuevos con "BLOG:" y guardar como borrador
+// ═══════════════════════════════════════════════════════════════════════════════
 function checkForBlogEmails() {
-  const threads = GmailApp.search(`subject:"${CONFIG.subjectPrefix}" is:unread`);
+  const threads = GmailApp.search('subject:"' + CONFIG.subjectPrefix + '" is:unread');
+  Logger.log('Threads BLOG encontrados: ' + threads.length);
 
-  threads.forEach(thread => {
-    const msg = thread.getMessages()[0];
-    const from = extractEmail(msg.getFrom());
+  for (var t = 0; t < threads.length; t++) {
+    var thread = threads[t];
+    var msg = thread.getMessages()[0];
+    var from = extractEmail(msg.getFrom());
+    Logger.log('Email de: ' + from);
 
-    if (!CONFIG.authorizedEmails.includes(from.toLowerCase())) {
-      // No autorizado — ignorar
-      return;
+    if (CONFIG.authorizedEmails.indexOf(from.toLowerCase()) === -1) {
+      Logger.log('No autorizado, ignorando');
+      continue;
     }
 
-    const subject = msg.getSubject();
-    const title = subject.replace(new RegExp(`^${CONFIG.subjectPrefix}\\s*`, 'i'), '').trim();
-    const body = msg.getPlainBody();
-    const attachments = msg.getAttachments();
+    var subject = msg.getSubject() || '';
+    var rawTitle = subject.replace(new RegExp(CONFIG.subjectPrefix + '\\s*', 'i'), '').trim();
+    var body = msg.getPlainBody() || '';
+    var attachments = msg.getAttachments() || [];
 
-    // Detectar categoría del asunto. Formato: "BLOG: [Experiencias] Mi título"
-    const catMatch = title.match(/^\[([^\]]+)\]\s*/);
-    let category = CONFIG.defaultCategory;
-    let categoryLabel = CONFIG.defaultCategoryLabel;
-    let cleanTitle = title;
+    // Detectar categoría [Experiencias], [Metodología], [Publicaciones]
+    var catMatch = rawTitle.match(/^\[([^\]]+)\]\s*/);
+    var category = CONFIG.defaultCategory;
+    var categoryLabel = CONFIG.defaultCategoryLabel;
+    var cleanTitle = rawTitle;
 
     if (catMatch) {
-      const catKey = catMatch[1].toLowerCase().trim();
+      var catKey = catMatch[1].toLowerCase().trim();
       if (CONFIG.categories[catKey]) {
         categoryLabel = CONFIG.categories[catKey];
         category = categoryLabel.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       }
-      cleanTitle = title.replace(catMatch[0], '').trim();
+      cleanTitle = rawTitle.replace(catMatch[0], '').trim();
     }
 
-    // Generar slug
-    const slug = cleanTitle
+    if (!cleanTitle) cleanTitle = rawTitle || 'Post sin título';
+    Logger.log('Título: ' + cleanTitle);
+
+    // Slug
+    var slug = cleanTitle
       .toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
-      .substring(0, 60);
+      .substring(0, 60) || ('post-' + Date.now());
 
-    // Guardar borrador en Sheet
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName(CONFIG.sheetName);
-    if (!sheet) {
-      sheet = ss.insertSheet(CONFIG.sheetName);
-      sheet.appendRow(['ID', 'Fecha', 'Autor', 'Título', 'Slug', 'Categoría', 'CategoríaLabel', 'Contenido', 'Imágenes', 'Estado']);
-      sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+    // Autor
+    var authorName = 'David Julián Castaño';
+    if (from.toLowerCase().indexOf('yagonzalez') > -1) {
+      authorName = 'Dra. Yuly González';
+    } else if (from.toLowerCase().indexOf('andresrgg') > -1) {
+      authorName = 'Dr. Andrés Ramírez';
     }
 
-    const id = Utilities.getUuid();
-    const date = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
-    const authorName = from.includes('yagonzalez') ? 'Yuly Andrea González' : 'Andrés Ramírez';
+    var id = Utilities.getUuid();
+    var date = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Guardar imágenes como blobs en Drive (temporalmente)
-    const imageNames = [];
-    const folder = getOrCreateFolder('blog-images-temp');
-    attachments.forEach((att, i) => {
-      if (att.getContentType().startsWith('image/')) {
-        const ext = att.getContentType().split('/')[1] === 'png' ? '.png' : '.jpg';
-        const fileName = `${slug}-${i + 1}${ext}`;
-        const file = folder.createFile(att.copyBlob().setName(fileName));
+    // Guardar imágenes en Drive
+    var imageNames = [];
+    var folder = getOrCreateFolder('blog-images-temp');
+    for (var i = 0; i < attachments.length; i++) {
+      var att = attachments[i];
+      if (att.getContentType() && att.getContentType().indexOf('image/') === 0) {
+        var ext = att.getContentType().indexOf('png') > -1 ? '.png' : '.jpg';
+        var fileName = slug + '-' + (i + 1) + ext;
+        var file = folder.createFile(att.copyBlob().setName(fileName));
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
         imageNames.push(fileName);
       }
-    });
+    }
 
+    // Guardar en Sheet
+    var sheet = getSheet();
     sheet.appendRow([id, date, authorName, cleanTitle, slug, category, categoryLabel, body, imageNames.join(','), 'borrador']);
+    Logger.log('Guardado: ' + id);
 
-    // Marcar como leído
+    // Archivar correo
     thread.markRead();
     GmailApp.moveThreadToArchive(thread);
 
     // Notificar al aprobador
-    sendApprovalEmail(id, cleanTitle, authorName, date, body.substring(0, 200));
-  });
-}
+    var excerpt = body.substring(0, 200).replace(/\n/g, ' ');
+    var htmlBody = '<div style="font-family:sans-serif;max-width:560px;padding:24px;border:1px solid #e5e5e5;border-radius:12px;">'
+      + '<h2 style="color:#2e6b4f;">📝 Nuevo post pendiente</h2>'
+      + '<p><strong>Título:</strong> ' + cleanTitle + '</p>'
+      + '<p><strong>Autor:</strong> ' + authorName + '</p>'
+      + '<p><strong>Fecha:</strong> ' + date + '</p>'
+      + '<p><strong>ID:</strong> <code>' + id + '</code></p>'
+      + '<p style="color:#555;padding:12px;background:#f8f8f6;border-radius:8px;">' + excerpt + '...</p>'
+      + '<p style="margin-top:16px;font-size:14px;color:#2e6b4f;font-weight:bold;">👉 Responde a este correo con "OK" para publicar.</p>'
+      + '<p style="font-size:12px;color:#999;">Si no quieres publicar, simplemente ignora este correo.</p>'
+      + '</div>';
 
-/**
- * Envía email al aprobador con link para aprobar.
- */
-function sendApprovalEmail(id, title, author, date, excerpt) {
-  const approveUrl = ScriptApp.getService().getUrl() + `?action=approve&id=${id}`;
+    MailApp.sendEmail({
+      to: CONFIG.approverEmail,
+      subject: CONFIG.approvalSubjectPrefix + ' "' + cleanTitle + '" — ' + authorName,
+      body: 'Nuevo post: "' + cleanTitle + '" de ' + authorName + '\nID: ' + id + '\n\nResponde "OK" para publicar.',
+      htmlBody: htmlBody
+    });
 
-  const html = `
-    <div style="font-family:'Segoe UI',sans-serif; max-width:560px; margin:0 auto; padding:24px; border:1px solid #e5e5e5; border-radius:12px;">
-      <h2 style="color:#2e6b4f; margin:0 0 12px;">📝 Nuevo post pendiente</h2>
-      <p><strong>Título:</strong> ${title}</p>
-      <p><strong>Autor:</strong> ${author}</p>
-      <p><strong>Fecha:</strong> ${date}</p>
-      <p style="color:#555; margin:12px 0; padding:12px; background:#f8f8f6; border-radius:8px;">${excerpt}...</p>
-      <a href="${approveUrl}" style="display:inline-block; padding:12px 24px; background:#2e6b4f; color:white; text-decoration:none; border-radius:999px; font-weight:600; margin-top:12px;">✓ Aprobar y publicar</a>
-      <p style="font-size:12px; color:#999; margin-top:16px;">Si no quieres publicar este post, simplemente ignora este correo.</p>
-    </div>
-  `;
-
-  MailApp.sendEmail({
-    to: CONFIG.approverEmail,
-    subject: `📝 Post pendiente: "${title}" — ${author}`,
-    htmlBody: html,
-    body: `Nuevo post de ${author}: "${title}"\n\nAprobar: ${approveUrl}`
-  });
-}
-
-/**
- * GET handler — procesa la aprobación cuando haces clic en el link.
- */
-function doGet(e) {
-  const action = e.parameter.action;
-  const id = e.parameter.id;
-
-  if (action === 'approve' && id) {
-    const result = publishPost(id);
-    return HtmlService.createHtmlOutput(`
-      <div style="font-family:'Segoe UI',sans-serif; text-align:center; padding:60px 20px;">
-        <h1 style="color:#2e6b4f;">✓ Post publicado</h1>
-        <p style="color:#555; font-size:1.1rem;">${result.title}</p>
-        <p style="margin-top:12px;"><a href="https://inglesconraices.com/blog/posts/${result.slug}.html" style="color:#2e6b4f;">Ver el post →</a></p>
-      </div>
-    `);
+    Logger.log('Notificación enviada');
   }
-
-  return HtmlService.createHtmlOutput('<p>Blog Publisher activo.</p>');
 }
 
-/**
- * Publica el post: genera HTML, sube imágenes a GitHub, actualiza posts.json.
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRIGGER 2: Buscar respuestas "OK" del aprobador y publicar
+// ═══════════════════════════════════════════════════════════════════════════════
+function checkForApprovals() {
+  // Buscar respuestas a correos de aprobación
+  var threads = GmailApp.search('subject:"' + CONFIG.approvalSubjectPrefix + '" from:' + CONFIG.approverEmail + ' is:unread');
+  Logger.log('Threads de aprobación: ' + threads.length);
+
+  for (var t = 0; t < threads.length; t++) {
+    var thread = threads[t];
+    var messages = thread.getMessages();
+
+    // Buscar la respuesta más reciente del aprobador
+    for (var m = messages.length - 1; m >= 0; m--) {
+      var msg = messages[m];
+      var msgFrom = extractEmail(msg.getFrom()).toLowerCase();
+
+      if (msgFrom !== CONFIG.approverEmail.toLowerCase()) continue;
+      if (!msg.isUnread()) continue;
+
+      var replyBody = msg.getPlainBody().trim().toLowerCase();
+      // Buscar "ok" en las primeras líneas (ignorar texto citado)
+      var firstLines = replyBody.split('\n').slice(0, 5).join(' ').trim();
+
+      if (firstLines.indexOf('ok') > -1) {
+        Logger.log('Aprobación detectada');
+
+        // Extraer el ID del post del hilo original
+        var originalMsg = messages[0];
+        var originalBody = originalMsg.getPlainBody();
+        var idMatch = originalBody.match(/ID:\s*([a-f0-9-]{36})/);
+
+        if (idMatch) {
+          var postId = idMatch[1];
+          Logger.log('Publicando post: ' + postId);
+
+          try {
+            var result = publishPost(postId);
+            Logger.log('Publicado: ' + result.title);
+
+            // Responder confirmación
+            MailApp.sendEmail({
+              to: CONFIG.approverEmail,
+              subject: '✅ Publicado: "' + result.title + '"',
+              body: 'El post fue publicado con éxito.\n\nVer: https://inglesconraices.com/blog/posts/' + result.slug + '.html'
+            });
+          } catch (err) {
+            Logger.log('Error al publicar: ' + err.message);
+            MailApp.sendEmail({
+              to: CONFIG.approverEmail,
+              subject: '❌ Error al publicar post',
+              body: 'Hubo un error: ' + err.message + '\n\nID: ' + postId
+            });
+          }
+        } else {
+          Logger.log('No se encontró ID en el hilo');
+        }
+      }
+
+      msg.markRead();
+      break;
+    }
+
+    thread.markRead();
+    GmailApp.moveThreadToArchive(thread);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLICAR: Genera HTML, sube a GitHub
+// ═══════════════════════════════════════════════════════════════════════════════
 function publishPost(id) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(CONFIG.sheetName);
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const rowIndex = data.findIndex(row => row[0] === id);
+  var sheet = getSheet();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
 
-  if (rowIndex === -1) throw new Error('Post no encontrado');
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === id) { rowIndex = i; break; }
+  }
+  if (rowIndex === -1) throw new Error('Post no encontrado con ID: ' + id);
 
-  const row = data[rowIndex];
-  const post = {
+  var row = data[rowIndex];
+  var post = {
     id:            row[0],
     date:          row[1],
     author:        row[2],
@@ -193,183 +250,184 @@ function publishPost(id) {
 
   if (post.status === 'publicado') return post;
 
-  const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
-  const repo = CONFIG.githubRepo;
+  var token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
+  var repo = CONFIG.githubRepo;
 
-  // 1. Subir imágenes al repo
-  const folder = getOrCreateFolder('blog-images-temp');
-  post.images.forEach(imgName => {
-    const files = folder.getFilesByName(imgName);
+  // Subir imágenes
+  var folder = getOrCreateFolder('blog-images-temp');
+  for (var i = 0; i < post.images.length; i++) {
+    var imgName = post.images[i];
+    var files = folder.getFilesByName(imgName);
     if (files.hasNext()) {
-      const file = files.next();
-      const content = Utilities.base64Encode(file.getBlob().getBytes());
-      commitFile(token, repo, `blog/images/${imgName}`, content, `Add image: ${imgName}`);
+      var file = files.next();
+      var content = Utilities.base64Encode(file.getBlob().getBytes());
+      commitFile(token, repo, 'blog/images/' + imgName, content, 'Add image: ' + imgName);
     }
-  });
+  }
 
-  // 2. Generar HTML del post
-  const htmlContent = generatePostHtml(post);
-  const htmlBase64 = Utilities.base64Encode(Utilities.newBlob(htmlContent).getBytes());
-  commitFile(token, repo, `blog/posts/${post.slug}.html`, htmlBase64, `Publish: ${post.title}`);
+  // Generar y subir HTML
+  var htmlContent = generatePostHtml(post);
+  var htmlBase64 = Utilities.base64Encode(Utilities.newBlob(htmlContent, 'text/html', 'post.html').getBytes());
+  commitFile(token, repo, 'blog/posts/' + post.slug + '.html', htmlBase64, 'Publish: ' + post.title);
 
-  // 3. Actualizar posts.json
+  // Actualizar posts.json
   updatePostsJson(token, repo, post);
 
-  // 4. Marcar como publicado en la sheet
+  // Marcar como publicado
   sheet.getRange(rowIndex + 1, 10).setValue('publicado');
 
-  // 5. Limpiar imágenes temp del Drive
-  post.images.forEach(imgName => {
-    const files = folder.getFilesByName(imgName);
-    if (files.hasNext()) files.next().setTrashed(true);
-  });
+  // Limpiar imágenes temporales
+  for (var i = 0; i < post.images.length; i++) {
+    var files2 = folder.getFilesByName(post.images[i]);
+    if (files2.hasNext()) files2.next().setTrashed(true);
+  }
 
   return post;
 }
 
-/**
- * Genera el HTML del post a partir del template.
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// GENERAR HTML DEL POST
+// ═══════════════════════════════════════════════════════════════════════════════
 function generatePostHtml(post) {
-  // Convertir texto plano a HTML
-  let contentHtml = post.content
-    .split(/\n\n+/)
-    .map(para => {
-      para = para.trim();
-      if (!para) return '';
-      // Si empieza con ## es h2
-      if (para.startsWith('## ')) return `<h2>${para.replace('## ', '')}</h2>`;
-      if (para.startsWith('### ')) return `<h3>${para.replace('### ', '')}</h3>`;
-      return `<p>${para.replace(/\n/g, '<br>')}</p>`;
-    })
-    .join('\n    ');
+  var paragraphs = post.content.split(/\n\n+/);
+  var contentHtml = '';
 
-  // Insertar primera imagen después del primer párrafo si hay
+  for (var i = 0; i < paragraphs.length; i++) {
+    var para = paragraphs[i].trim();
+    if (!para) continue;
+    if (para.indexOf('## ') === 0) {
+      contentHtml += '<h2>' + para.replace('## ', '') + '</h2>\n';
+    } else if (para.indexOf('### ') === 0) {
+      contentHtml += '<h3>' + para.replace('### ', '') + '</h3>\n';
+    } else {
+      contentHtml += '<p>' + para.replace(/\n/g, '<br>') + '</p>\n';
+    }
+  }
+
+  // Insertar imágenes
   if (post.images.length > 0) {
-    const firstP = contentHtml.indexOf('</p>');
-    if (firstP > -1) {
-      const imgTag = `\n    <img src="../images/${post.images[0]}" alt="${post.title}">`;
-      contentHtml = contentHtml.substring(0, firstP + 4) + imgTag + contentHtml.substring(firstP + 4);
-    }
-    // Insertar imágenes adicionales al final
-    for (let i = 1; i < post.images.length; i++) {
-      contentHtml += `\n    <img src="../images/${post.images[i]}" alt="${post.title}">`;
+    for (var i = 0; i < post.images.length; i++) {
+      contentHtml += '<img src="../images/' + post.images[i] + '" alt="' + post.title + '">\n';
     }
   }
 
-  const excerpt = post.content.substring(0, 160).replace(/\n/g, ' ').trim();
+  var excerpt = post.content.substring(0, 160).replace(/\n/g, ' ').trim();
 
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${post.title} · Blog · Inglés con Raíces</title>
-  <meta name="description" content="${excerpt}">
-  <link rel="canonical" href="https://inglesconraices.com/blog/posts/${post.slug}.html">
-  <meta property="og:type" content="article">
-  <meta property="og:url" content="https://inglesconraices.com/blog/posts/${post.slug}.html">
-  <meta property="og:title" content="${post.title}">
-  <meta property="og:description" content="${excerpt}">
-  ${post.images.length ? `<meta property="og:image" content="https://inglesconraices.com/blog/images/${post.images[0]}">` : ''}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../css/styles.css?v=2">
-  <link rel="stylesheet" href="../../css/blog.css?v=1">
-</head>
-<body>
-<nav>
-  <a href="../../" class="nav-brand">
-    <div class="nav-dot"></div>
-    <span class="nav-name">inglesconraices.com</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="../../#sobre">Sobre nosotros</a></li>
-    <li><a href="../../#metodo">Metodología</a></li>
-    <li><a href="../" class="nav-link--active">Blog</a></li>
-    <li><a href="../../#contacto">Contacto</a></li>
-  </ul>
-  <a href="../../#contacto" class="nav-cta">Conectemos</a>
-</nav>
-<article class="post-container">
-  <a href="../" class="post-back">← Volver al blog</a>
-  <span class="post-category">${post.categoryLabel}</span>
-  <h1 class="post-title">${post.title}</h1>
-  <p class="post-meta">Por ${post.author} · ${post.date}</p>
-  <div class="post-content">
-    ${contentHtml}
-  </div>
-</article>
-<footer>
-  <span class="footer-brand">Inglés con Raíces · Genre Translanguaging</span>
-  <span>© 2026 · Bogotá, Colombia</span>
-  <a href="../../">← Inicio</a>
-</footer>
-</body>
-</html>`;
+  return '<!DOCTYPE html>\n'
+    + '<html lang="es">\n<head>\n'
+    + '<meta charset="UTF-8">\n'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+    + '<title>' + post.title + ' · Blog · Inglés con Raíces</title>\n'
+    + '<meta name="description" content="' + excerpt + '">\n'
+    + '<link rel="canonical" href="https://inglesconraices.com/blog/posts/' + post.slug + '.html">\n'
+    + '<meta property="og:type" content="article">\n'
+    + '<meta property="og:title" content="' + post.title + '">\n'
+    + '<meta property="og:description" content="' + excerpt + '">\n'
+    + (post.images.length > 0 ? '<meta property="og:image" content="https://inglesconraices.com/blog/images/' + post.images[0] + '">\n' : '')
+    + '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+    + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+    + '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">\n'
+    + '<link rel="stylesheet" href="../../css/styles.css?v=2">\n'
+    + '<link rel="stylesheet" href="../../css/blog.css?v=1">\n'
+    + '</head>\n<body>\n'
+    + '<nav>\n'
+    + '  <a href="../../" class="nav-brand"><div class="nav-dot"></div><span class="nav-name">inglesconraices.com</span></a>\n'
+    + '  <ul class="nav-links">\n'
+    + '    <li><a href="../../#sobre">Sobre nosotros</a></li>\n'
+    + '    <li><a href="../../#metodo">Metodología</a></li>\n'
+    + '    <li><a href="../" class="nav-link--active">Blog</a></li>\n'
+    + '    <li><a href="../../#contacto">Contacto</a></li>\n'
+    + '  </ul>\n'
+    + '  <a href="../../#contacto" class="nav-cta">Conectemos</a>\n'
+    + '</nav>\n'
+    + '<article class="post-container">\n'
+    + '  <a href="../" class="post-back">← Volver al blog</a>\n'
+    + '  <span class="post-category">' + post.categoryLabel + '</span>\n'
+    + '  <h1 class="post-title">' + post.title + '</h1>\n'
+    + '  <p class="post-meta">Por ' + post.author + ' · ' + post.date + '</p>\n'
+    + '  <div class="post-content">\n' + contentHtml + '  </div>\n'
+    + '</article>\n'
+    + '<footer>\n'
+    + '  <span class="footer-brand">Inglés con Raíces · Genre Translanguaging</span>\n'
+    + '  <span>© 2026 · Bogotá, Colombia</span>\n'
+    + '  <a href="../../">← Inicio</a>\n'
+    + '</footer>\n'
+    + '</body>\n</html>';
 }
 
-/**
- * Actualiza posts.json en el repo añadiendo el nuevo post al inicio.
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// ACTUALIZAR posts.json
+// ═══════════════════════════════════════════════════════════════════════════════
 function updatePostsJson(token, repo, post) {
-  const path = 'blog/posts.json';
-  let posts = [];
-  let sha = null;
+  var path = 'blog/posts.json';
+  var maxRetries = 3;
 
-  // Leer JSON actual
-  try {
-    const res = UrlFetchApp.fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-      headers: { 'Authorization': `token ${token}` }
+  for (var attempt = 0; attempt < maxRetries; attempt++) {
+    var posts = [];
+    var sha = null;
+
+    try {
+      var res = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/contents/' + path, {
+        headers: { 'Authorization': 'token ' + token },
+        muteHttpExceptions: true
+      });
+      if (res.getResponseCode() === 200) {
+        var fileData = JSON.parse(res.getContentText());
+        sha = fileData.sha;
+        var decoded = Utilities.newBlob(Utilities.base64Decode(fileData.content)).getDataAsString();
+        posts = JSON.parse(decoded);
+      }
+    } catch (e) {
+      Logger.log('posts.json no existe aún, se creará');
+    }
+
+    var excerpt = post.content.substring(0, 180).replace(/\n/g, ' ').trim() + '...';
+
+    // Evitar duplicados
+    posts = posts.filter(function(p) { return p.slug !== post.slug; });
+
+    posts.unshift({
+      slug: post.slug,
+      title: post.title,
+      excerpt: excerpt,
+      author: post.author,
+      date: post.date,
+      category: post.category,
+      categoryLabel: post.categoryLabel,
+      image: post.images.length > 0 ? post.images[0] : null
     });
-    const data = JSON.parse(res.getContentText());
-    sha = data.sha;
-    posts = JSON.parse(Utilities.newBlob(Utilities.base64Decode(data.content)).getDataAsString());
-  } catch (e) {
-    // File doesn't exist yet
+
+    var content = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(posts, null, 2)).getBytes());
+    var payload = { message: 'Update posts.json: add "' + post.title + '"', content: content };
+    if (sha) payload.sha = sha;
+
+    var putRes = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/contents/' + path, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    if (putRes.getResponseCode() === 200 || putRes.getResponseCode() === 201) {
+      Logger.log('posts.json actualizado correctamente');
+      return;
+    }
+
+    Logger.log('Intento ' + (attempt + 1) + ' falló con código ' + putRes.getResponseCode() + '. Reintentando...');
+    Utilities.sleep(2000);
   }
 
-  const excerpt = post.content.substring(0, 180).replace(/\n/g, ' ').trim() + '...';
-
-  // Añadir al inicio
-  posts.unshift({
-    slug: post.slug,
-    title: post.title,
-    excerpt: excerpt,
-    author: post.author,
-    date: post.date,
-    category: post.category,
-    categoryLabel: post.categoryLabel,
-    image: post.images.length > 0 ? post.images[0] : null
-  });
-
-  const content = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(posts, null, 2)).getBytes());
-
-  const payload = {
-    message: `Update posts.json: add "${post.title}"`,
-    content: content
-  };
-  if (sha) payload.sha = sha;
-
-  UrlFetchApp.fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `token ${token}`,
-      'Content-Type': 'application/json'
-    },
-    payload: JSON.stringify(payload)
-  });
+  Logger.log('ERROR: No se pudo actualizar posts.json después de ' + maxRetries + ' intentos');
 }
 
-/**
- * Commit un archivo al repo.
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILIDADES
+// ═══════════════════════════════════════════════════════════════════════════════
 function commitFile(token, repo, path, contentBase64, message) {
-  let sha = null;
+  var sha = null;
   try {
-    const res = UrlFetchApp.fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-      headers: { 'Authorization': `token ${token}` },
+    var res = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/contents/' + path, {
+      headers: { 'Authorization': 'token ' + token },
       muteHttpExceptions: true
     });
     if (res.getResponseCode() === 200) {
@@ -377,31 +435,22 @@ function commitFile(token, repo, path, contentBase64, message) {
     }
   } catch (e) {}
 
-  const payload = { message, content: contentBase64 };
+  var payload = { message: message, content: contentBase64 };
   if (sha) payload.sha = sha;
 
-  UrlFetchApp.fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+  UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/contents/' + path, {
     method: 'PUT',
-    headers: {
-      'Authorization': `token ${token}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
     payload: JSON.stringify(payload)
   });
 }
 
-/**
- * Obtener o crear carpeta en Drive.
- */
 function getOrCreateFolder(name) {
-  const folders = DriveApp.getFoldersByName(name);
+  var folders = DriveApp.getFoldersByName(name);
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
 }
 
-/**
- * Extraer email de un string tipo "Nombre <email@example.com>"
- */
 function extractEmail(from) {
-  const match = from.match(/<(.+)>/);
+  var match = from.match(/<(.+)>/);
   return match ? match[1] : from;
 }
