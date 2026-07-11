@@ -1,0 +1,18 @@
+# Carpeta de trabajo local — no subir al repo ni al hosting
+Recursos/
+Documentacion/
+
+# Claves SSH
+github_hostinger_key
+github_hostinger_key.pub
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+
+# Archivos temporales de Drive (generados por Apps Script)
+Recursos/_preview_*/
