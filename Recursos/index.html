@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recursos · Inglés con Raíces</title>
+  <meta name="description" content="Actividades interactivas para aprender inglés desde el español. Recursos creados por docentes del Colegio Llano Oriental, Bogotá.">
+  <link rel="canonical" href="https://inglesconraices.com/recursos/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://inglesconraices.com/recursos/">
+  <meta property="og:title" content="Recursos · Inglés con Raíces">
+  <meta property="og:description" content="Actividades interactivas para aprender inglés desde el español.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css?v=2">
+  <link rel="stylesheet" href="../css/recursos.css?v=1">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="../" class="nav-brand">
+    <div class="nav-dot"></div>
+    <span class="nav-name">inglesconraices.com</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="../#sobre">Sobre nosotros</a></li>
+    <li><a href="../#metodo">Metodología</a></li>
+    <li><a href="../blog/">Blog</a></li>
+    <li><a href="./" class="nav-link--active">Recursos</a></li>
+    <li><a href="../#contacto">Contacto</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="../#contacto" class="nav-cta">Conectemos</a>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="recursos-hero">
+  <div class="recursos-hero-content">
+    <div class="section-label">Para estudiantes y docentes</div>
+    <h1>Recursos<br><em>interactivos</em></h1>
+    <p>Actividades diseñadas por Yuly y Andrés para practicar inglés desde lo que los estudiantes ya conocen. Cada unidad sigue el Ciclo Bilingüe Simultáneo.</p>
+  </div>
+  <div class="recursos-hero-stats">
+    <div class="recursos-stat">
+      <span class="recursos-stat-num" id="total-units">—</span>
+      <span class="recursos-stat-label">Unidades disponibles</span>
+    </div>
+    <div class="recursos-stat">
+      <span class="recursos-stat-num">10+</span>
+      <span class="recursos-stat-label">Actividades por unidad</span>
+    </div>
+  </div>
+</header>
+
+<!-- FILTROS -->
+<section class="recursos-filters">
+  <button class="recursos-filter active" data-grade="all">Todos los niveles</button>
+  <button class="recursos-filter" data-grade="3">3° grado</button>
+  <button class="recursos-filter" data-grade="4">4° grado</button>
+  <button class="recursos-filter" data-grade="5">5° grado</button>
+</section>
+
+<!-- GRID -->
+<main class="recursos-grid" id="recursos-grid">
+  <div class="recursos-loading">Cargando recursos...</div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-brand">Inglés con Raíces · Genre Translanguaging</span>
+  <span>© 2026 · Bogotá, Colombia</span>
+  <a href="../">← Inicio</a>
+</footer>
+
+<script src="../js/recursos.js?v=1"></script>
+</body>
+</html>
