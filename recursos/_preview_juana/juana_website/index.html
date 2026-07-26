@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juana and Her Life in Chocó</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="tag">English 5th Grade · Reading Review</p>
+      <h1>🌧️ Juana and Her Life in Chocó</h1>
+      <p class="subtitle">Interactive review of a descriptive report</p>
+      <p class="es"><em>Repaso interactivo de un reporte descriptivo</em></p>
+    </div>
+    <div class="hero-card">👧🏾🌊🥁🏠</div>
+  </header>
+
+  <nav class="nav">
+    <a href="#text">📖 Text</a>
+    <a href="#games">🎮 Games</a>
+    <a href="#final">🏆 Final</a>
+  </nav>
+
+  <main>
+    <section class="card welcome">
+      <h2>👋 Welcome!</h2>
+      <p>Review Juana’s text through games. Start with the general structure and move to paragraphs, sentences, words, listening, and pronunciation.</p>
+      <p class="es"><em>Repasa el texto de Juana con juegos. Inicia por la estructura general y avanza hacia párrafos, oraciones, palabras, escucha y pronunciación.</em></p>
+    </section>
+
+    <section id="text" class="card">
+      <h2>📖 Review the Text</h2>
+      <div class="text-grid">
+        <article><h3>📖 Title</h3><p><strong>Juana and Her Life in Chocó</strong></p></article>
+        <article><h3>👧🏾 Classification</h3><p>Juana is a girl who belongs to an Afro-Colombian community located in Chocó, in the west of Colombia. She is 10 years old and lives with her family near the Atrato River.</p></article>
+        <article><h3>🏠 Houses</h3><p>Juana lives in a wooden house. The houses in her community are built on stilts because it rains a lot in Chocó.</p></article>
+        <article><h3>🥁 Celebrations</h3><p>Besides its beautiful landscapes, Juana’s community is also rich in culture and traditions. Juana enjoys music and traditional dances. During celebrations, people play drums, sing, and dance together.</p></article>
+        <article><h3>🎣 Activities</h3><p>In her daily life, Juana helps her family and enjoys spending time outdoors. She likes fishing with her uncle, helping her mother cook, singing and playing with her friends near the river.</p></article>
+        <article><h3>🚤 Difficulties</h3><p>However, life in Chocó also has some challenges. One of the main problems in Juana’s community is transportation. Some roads are muddy, and many families travel by boat to go to school or buy food. Despite these challenges, Juana feels proud of her community and culture.</p></article>
+      </div>
+    </section>
+
+    <section id="games">
+      <h2 class="section-title">🎮 Games: From general to specific</h2>
+      <p class="center es"><em>Juegos: de lo general a lo específico</em></p>
+
+      <section class="game card" data-game="structure">
+        <h3>1️⃣ Order the Text Structure</h3>
+        <p>Drag the stages into the correct order.</p>
+        <p class="es"><em>Arrastra las etapas en el orden correcto.</em></p>
+        <div id="structure-list" class="sortable"></div>
+        <button onclick="checkStructure()">Check</button>
+        <p id="structure-feedback" class="feedback"></p>
+      </section>
+
+      <section class="game card" data-game="paragraphs">
+        <h3>2️⃣ Match Paragraphs and Stages</h3>
+        <p>Select the correct stage for each paragraph.</p>
+        <p class="es"><em>Selecciona la etapa correcta para cada párrafo.</em></p>
+        <div id="paragraph-game"></div>
+        <button onclick="checkParagraphs()">Check</button>
+        <p id="paragraph-feedback" class="feedback"></p>
+      </section>
+
+      <section class="game card" data-game="keywords">
+        <h3>3️⃣ Classify Key Words</h3>
+        <p>Click a word, then click its category.</p>
+        <p class="es"><em>Haz clic en una palabra y luego en su categoría.</em></p>
+        <div id="word-bank" class="word-bank"></div>
+        <div id="categories" class="category-grid"></div>
+        <button onclick="checkKeywords()">Check</button>
+        <button class="secondary" onclick="resetKeywords()">Reset</button>
+        <p id="keywords-feedback" class="feedback"></p>
+      </section>
+
+      <section class="game card" data-game="tf">
+        <h3>4️⃣ True or False</h3>
+        <p>Choose True or False.</p>
+        <p class="es"><em>Escoge verdadero o falso.</em></p>
+        <div id="tf-game"></div>
+        <button onclick="checkTF()">Check</button>
+        <p id="tf-feedback" class="feedback"></p>
+      </section>
+
+      <section class="game card" data-game="complete">
+        <h3>5️⃣ Complete the Sentences</h3>
+        <p>Choose the correct word.</p>
+        <p class="es"><em>Escoge la palabra correcta.</em></p>
+        <div id="complete-game"></div>
+        <button onclick="checkComplete()">Check</button>
+        <p id="complete-feedback" class="feedback"></p>
+      </section>
+
+      <section class="game card" data-game="listening">
+        <h3>6️⃣ Listening Challenge</h3>
+        <p>Listen and choose the correct image/word.</p>
+        <p class="es"><em>Escucha y escoge la imagen o palabra correcta.</em></p>
+        <div id="listening-game"></div>
+        <button onclick="checkListening()">Check</button>
+        <p id="listening-feedback" class="feedback"></p>
+      </section>
+
+      <section class="game card" data-game="pronunciation">
+        <h3>7️⃣ Pronunciation Sort</h3>
+        <p>Choose the sound category for each word.</p>
+        <p class="es"><em>Escoge la categoría de pronunciación para cada palabra.</em></p>
+        <div id="pron-game"></div>
+        <button onclick="checkPronunciation()">Check</button>
+        <p id="pron-feedback" class="feedback"></p>
+      </section>
+    </section>
+
+    <section id="final" class="game card final">
+      <h2>🏆 Final Challenge</h2>
+      <p>Answer the mixed quiz and see your final score.</p>
+      <p class="es"><em>Responde el quiz mixto y revisa tu puntaje final.</em></p>
+      <div id="final-quiz"></div>
+      <button onclick="checkFinal()">Finish</button>
+      <p id="final-feedback" class="feedback big"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>🌎 We’re different, but we are all wonderful.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
