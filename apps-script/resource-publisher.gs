@@ -14,8 +14,8 @@
 
 var RES_CONFIG = {
   authorizedEmails: [
-    'yagonzalezme@educacionbogota.edu.co',
-    'andresrgg@gmail.com',
+    'yulygonza@gmail.com',
+    'jaramirez1971@gmail.com',
     'davidfgv83@gmail.com'
   ],
   notifyEmail:       'davidfgv83@gmail.com',

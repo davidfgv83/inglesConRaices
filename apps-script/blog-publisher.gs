@@ -12,8 +12,8 @@
 
 const CONFIG = {
   authorizedEmails: [
-    'yagonzalezme@educacionbogota.edu.co',
-    'andresrgg@gmail.com',
+    'yulygonza@gmail.com',
+    'jaramirez1971@gmail.com',
     'davidfgv83@gmail.com'
   ],
   approverEmail: 'davidfgv83@gmail.com',

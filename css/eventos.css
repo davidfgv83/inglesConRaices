@@ -1,0 +1,198 @@
+/* ─── PÁGINA DE EVENTOS · Inglés con Raíces ─── */
+
+/* Hero */
+.eventos-hero {
+  padding: 8rem 4rem 4rem;
+  background: var(--magenta);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+.eventos-hero::before {
+  content: '📅';
+  position: absolute; right: 4rem; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14rem; opacity: 0.05;
+  pointer-events: none;
+}
+.eventos-hero-content { flex: 1; min-width: 280px; position: relative; z-index: 2; }
+.eventos-hero-content .section-label { color: rgba(255,255,255,0.4); }
+.eventos-hero-content .section-label::before { background: rgba(255,255,255,0.3); }
+.eventos-hero-content h1 {
+  font-family: var(--ff-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  color: white; font-weight: 700; line-height: 1.1; margin-bottom: 1rem;
+}
+.eventos-hero-content h1 em { font-style: italic; color: rgba(255,255,255,0.75); }
+.eventos-hero-content p { color: rgba(255,255,255,0.7); font-size: 1rem; line-height: 1.8; max-width: 480px; }
+
+.eventos-hero-stats {
+  display: flex; gap: 2rem;
+  position: relative; z-index: 2;
+}
+.eventos-stat {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 1.25rem 2rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-md);
+}
+.eventos-stat-num {
+  font-family: var(--ff-display);
+  font-size: 2.5rem; font-weight: 700; color: white; line-height: 1;
+}
+.eventos-stat-label {
+  font-size: 0.72rem; color: rgba(255,255,255,0.6);
+  text-align: center; margin-top: 0.35rem; line-height: 1.4;
+}
+
+/* Grid */
+.eventos-grid {
+  padding: 3rem 4rem 5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.75rem;
+  background: var(--cream);
+  min-height: 40vh;
+}
+.eventos-loading, .eventos-empty {
+  grid-column: 1 / -1; text-align: center;
+  padding: 4rem 2rem; color: var(--ink-soft); font-size: 1rem;
+}
+
+/* Tarjeta de evento */
+.evento-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.evento-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+}
+
+/* Portada */
+.evento-card-cover {
+  aspect-ratio: 16/9;
+  position: relative; overflow: hidden;
+  background: var(--magenta);
+  display: flex; align-items: center; justify-content: center;
+}
+.evento-card-cover img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.evento-card-cover-placeholder {
+  font-size: 3.5rem; opacity: 0.35;
+}
+/* Chip de modalidad */
+.evento-modality-chip {
+  position: absolute; top: 0.75rem; left: 0.75rem;
+  font-size: 0.65rem; font-weight: 700;
+  padding: 0.2rem 0.65rem; border-radius: var(--radius-pill);
+  backdrop-filter: blur(6px);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.evento-modality-chip.presencial {
+  background: rgba(46,107,79,0.85); color: white;
+}
+.evento-modality-chip.virtual {
+  background: rgba(196,49,95,0.85); color: white;
+}
+.evento-modality-chip.hibrido {
+  background: rgba(212,160,48,0.85); color: white;
+}
+
+/* Body */
+.evento-card-body {
+  padding: 1.25rem 1.5rem;
+  flex: 1; display: flex; flex-direction: column;
+}
+.evento-card-type {
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--magenta); margin-bottom: 0.4rem;
+}
+.evento-card-title {
+  font-family: var(--ff-display);
+  font-size: 1.2rem; font-weight: 700; color: var(--ink);
+  line-height: 1.3; margin-bottom: 0.75rem;
+}
+.evento-card-details {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  margin-bottom: 0.75rem; flex: 1;
+}
+.evento-card-detail {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; color: var(--ink-mid);
+}
+.evento-card-detail-icon { font-size: 0.9rem; flex-shrink: 0; }
+.evento-card-desc {
+  font-size: 0.82rem; color: var(--ink-soft); line-height: 1.65;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.evento-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--border); padding-top: 0.75rem;
+}
+.evento-card-speakers {
+  font-size: 0.72rem; color: var(--ink-soft); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.evento-card-cta {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--magenta); text-decoration: none;
+  background: var(--magenta-light);
+  padding: 0.3rem 0.85rem; border-radius: var(--radius-pill);
+  border: 1px solid #f0c8d8;
+  transition: background 0.2s; flex-shrink: 0; margin-left: 0.5rem;
+}
+.evento-card-cta:hover { background: #f0c8d8; }
+.evento-card-cta.no-link {
+  color: var(--ink-soft); background: var(--cream-dark);
+  border-color: var(--border); cursor: default;
+}
+
+/* Fecha destacada en la portada */
+.evento-date-badge {
+  position: absolute; bottom: 0.75rem; right: 0.75rem;
+  background: rgba(0,0,0,0.7);
+  color: white; border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem; text-align: center;
+  backdrop-filter: blur(6px);
+  line-height: 1.2;
+}
+.evento-date-badge-day {
+  font-family: var(--ff-display);
+  font-size: 1.4rem; font-weight: 700; display: block;
+}
+.evento-date-badge-month {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
+/* Nav link activo */
+.nav-link--active { color: var(--green) !important; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1024px) {
+  .eventos-hero { padding: 7rem 2rem 3rem; }
+  .eventos-grid { padding: 2.5rem 2rem 4rem; }
+}
+@media (max-width: 640px) {
+  .eventos-hero { padding: 6rem 1.25rem 2.5rem; flex-direction: column; }
+  .eventos-hero::before { display: none; }
+  .eventos-hero-stats { width: 100%; }
+  .eventos-grid { padding: 2rem 1.25rem 3rem; grid-template-columns: 1fr; }
+}

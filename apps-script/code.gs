@@ -11,8 +11,8 @@
 const NOTIFY_EMAILS = [
   'genretranslanguaging@gmail.com',
   'davidfgv83@gmail.com',
-  'andresrgg@gmail.com',
-  'yagonzalezme@educacionbogota.edu.co'
+  'yulygonza@gmail.com',
+  'jaramirez1971@gmail.com'
 ];
 
 // Nombre de la hoja donde se respaldan los contactos
