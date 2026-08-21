@@ -12,6 +12,19 @@ const MODALITY_LABEL = {
   'Presencial': 'presencial', 'Virtual': 'virtual', 'Híbrido': 'hibrido'
 };
 
+/** Parsea dd/mm/yyyy, d/m/yyyy, yyyy-mm-dd y Date() nativo */
+function parseFecha(raw) {
+  if (!raw) return null;
+  // dd/mm/yyyy o d/m/yyyy
+  const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+  // yyyy-mm-dd
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
+  const d = new Date(raw);
+  return isNaN(d) ? null : d;
+}
+
 async function loadEventos() {
   try {
     const res = await fetch(EVENTS_URL);
@@ -38,13 +51,20 @@ function renderEventos(events) {
       ? `<img src="images/${ev.image}" alt="${ev.title}" loading="lazy">`
       : `<span class="evento-card-cover-placeholder">${emoji}</span>`;
 
-    // Badge de fecha
+    // Badge de fecha — usa el parser flexible
     let dayStr = '', monthStr = '';
-    if (ev.date) {
-      const d = new Date(ev.date + 'T12:00:00');
-      dayStr   = d.getDate();
-      monthStr = d.toLocaleString('es-CO', { month: 'short' }).replace('.','');
+    const dateObj = parseFecha(ev.date);
+    if (dateObj) {
+      dayStr   = dateObj.getDate();
+      monthStr = dateObj.toLocaleString('es-CO', { month: 'short' }).replace('.', '');
     }
+
+    // Etiqueta de fecha legible
+    const dateDisplay = ev.dateLabel && ev.dateLabel !== ev.date
+      ? ev.dateLabel
+      : (dateObj
+          ? dateObj.toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })
+          : ev.date);
 
     const speakersHtml = ev.speakers && ev.speakers.length
       ? `<span class="evento-card-speakers">👤 ${ev.speakers.join(' · ')}</span>`
@@ -70,7 +90,7 @@ function renderEventos(events) {
           <div class="evento-card-details">
             <div class="evento-card-detail">
               <span class="evento-card-detail-icon">📅</span>
-              <span>${ev.dateLabel || ev.date}${ev.time ? ' · ' + ev.time : ''}</span>
+              <span>${dateDisplay}${ev.time ? ' · ' + ev.time : ''}</span>
             </div>
             <div class="evento-card-detail">
               <span class="evento-card-detail-icon">📍</span>

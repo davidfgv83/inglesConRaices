@@ -52,11 +52,12 @@ function onFormSubmit(e) {
 
     if (!title) throw new Error('El campo "Título del evento" es obligatorio');
 
-    // Parsear fecha
-    var dateObj   = new Date(dateRaw);
-    var dateISO   = isNaN(dateObj) ? dateRaw : Utilities.formatDate(dateObj, 'America/Bogota', 'yyyy-MM-dd');
-    var dateLabel = isNaN(dateObj) ? dateRaw
-      : dateObj.toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' });
+    // Parsear fecha — soporta dd/mm/yyyy y otros formatos
+    var dateObj = parseDateFlexible(dateRaw);
+    var dateISO   = dateObj ? Utilities.formatDate(dateObj, 'America/Bogota', 'yyyy-MM-dd') : dateRaw;
+    var dateLabel = dateObj
+      ? dateObj.toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })
+      : dateRaw;
 
     // Parsear ponentes
     var speakers = speakersRaw
@@ -232,4 +233,21 @@ function getVal(namedValues, key) {
   if (!namedValues || !namedValues[key]) return '';
   var arr = namedValues[key];
   return Array.isArray(arr) ? (arr[0] || '').trim() : (arr || '').trim();
+}
+
+function parseDateFlexible(raw) {
+  if (!raw) return null;
+  // dd/mm/yyyy o d/m/yyyy
+  var dmyMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmyMatch) {
+    return new Date(parseInt(dmyMatch[3]), parseInt(dmyMatch[2]) - 1, parseInt(dmyMatch[1]));
+  }
+  // yyyy-mm-dd
+  var isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+  }
+  // Intentar parse nativo
+  var d = new Date(raw);
+  return isNaN(d) ? null : d;
 }
