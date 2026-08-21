@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "slug": "taller-cbs-ensenar-ingles-desde-el-espan-27/8/2026",
+    "title": "Taller CBS: Enseñar inglés desde el español",
+    "type": "Taller",
+    "date": "27/8/2026",
+    "dateLabel": "27/8/2026",
+    "time": "9:00:00 a.m.",
+    "place": "Colegio Llano Oriental, Bosa, Bogotá",
+    "modality": "Presencial",
+    "description": "Taller práctico para docentes sobre el Ciclo Bilingüe Simultáneo. Aprende a usar el español como puente pedagógico para que tus estudiantes escriban textos reales en inglés.",
+    "link": null,
+    "image": null,
+    "speakers": [
+      "Yuly González",
+      "Andrés Ramírez"
+    ],
+    "organizer": "davidfgv83@gmail.com",
+    "access": "public"
+  }
+]
