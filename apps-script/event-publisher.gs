@@ -50,7 +50,21 @@ function onFormSubmit(e) {
     var speakersRaw = getVal(response, 'Ponentes');
     var organizer   = getVal(response, 'Correo del organizador');
 
-    if (!title) throw new Error('El campo "Título del evento" es obligatorio');
+    // Validar que el organizador sea un correo autorizado
+    var authorizedEmails = [
+      'yulygonza@gmail.com',
+      'jaramirez1971@gmail.com',
+      'davidfgv83@gmail.com'
+    ];
+    if (!organizer || authorizedEmails.indexOf(organizer.toLowerCase()) === -1) {
+      Logger.log('Correo no autorizado: ' + organizer + ' — evento ignorado');
+      MailApp.sendEmail({
+        to: EV_CONFIG.notifyEmail,
+        subject: '⚠️ Intento de publicación no autorizado',
+        body: 'Alguien intentó publicar un evento desde un correo no autorizado.\n\nCorreo: ' + organizer + '\nTítulo: ' + getVal(response, 'Título del evento')
+      });
+      return;
+    }
 
     // Parsear fecha — soporta dd/mm/yyyy y otros formatos
     var dateObj = parseDateFlexible(dateRaw);

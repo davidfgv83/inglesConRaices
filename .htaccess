@@ -1,0 +1,26 @@
+# ─── Inglés con Raíces · Apache configuration ───────────────────────────────
+
+# Servir index.html por defecto en todos los subdirectorios
+DirectoryIndex index.html
+
+# Evitar listado de directorios
+Options -Indexes
+
+# Codificación UTF-8 por defecto
+AddDefaultCharset UTF-8
+
+# Cache para assets estáticos
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css             "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/jpeg           "access plus 1 month"
+  ExpiresByType image/png            "access plus 1 month"
+  ExpiresByType image/webp           "access plus 1 month"
+  ExpiresByType application/json     "access plus 0 seconds"
+</IfModule>
+
+# Comprimir respuestas
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
