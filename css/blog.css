@@ -1,5 +1,8 @@
 /* ─── BLOG STYLES ─── */
 
+/* Ítem activo del nav principal (compartido con recursos.css) */
+.nav-link--active { color: var(--green) !important; }
+
 /* Hero */
 .blog-hero {
   padding: 8rem 4rem 4rem;
